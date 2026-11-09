@@ -552,17 +552,22 @@ function About() {
 function Contact() {
   const [state, setState] = useState('idle');
   const [copied, copy] = useCopy();
-  const submit = async e => {
+  const submit = e => {
     e.preventDefault();
-    setState('sending');
-    try {
-      const res = await fetch('/__forms.html', {
-        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(e.target)).toString(),
-      });
-      if (!res.ok) throw new Error(res.status);
-      setState('sent'); e.target.reset();
-    } catch { setState('error'); }
+    const form = e.currentTarget;
+    const values = new FormData(form);
+    const subject = `Portfolio enquiry — ${values.get('topic') || 'General'}`;
+    const body = [
+      `Name: ${values.get('name') || ''}`,
+      `Email: ${values.get('email') || ''}`,
+      `Topic: ${values.get('topic') || ''}`,
+      '',
+      'Message:',
+      values.get('message') || '',
+    ].join('\\n');
+    const mailto = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    setState('sent');
   };
   return (
     <section className="contact" id="contact">
@@ -596,7 +601,7 @@ function Contact() {
               {state === 'sending' ? <><Loader2 size={16} className="spin" /> Sending…</> : <>Send message <Send size={16} /></>}
             </button>
             <div className="form-status" aria-live="polite">
-              {state === 'sent' && <span className="ok"><CheckCircle2 size={15} /> Thanks — your message was sent. I'll reply soon.</span>}
+              {state === 'sent' && <span className="ok"><CheckCircle2 size={15} /> Your email app should open with the message ready. Press Send to deliver it.</span>}
               {state === 'error' && <span className="err">Something went wrong. Please email me directly instead.</span>}
             </div>
           </Spotlight>
